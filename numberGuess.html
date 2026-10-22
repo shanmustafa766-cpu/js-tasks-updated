@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Guessing Game</title>
+    <style>
+        .app {
+            margin: auto;
+            text-align: center;
+            padding: 10px;
+        }
+
+        .intro {
+            background-color: blue;
+            color: aliceblue;
+            min-height: 70px;
+            padding: 12px 10px;
+            width: min(90%, 700px);
+            margin: auto;
+            line-height: 1.3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+
+        .head {
+            color: rgba(46, 46, 172, 0.9);
+        }
+
+        input {
+            display: block;
+            margin: auto;
+            height: 45px;
+            width: min(80%, 320px);
+            color: blueviolet;
+            font-size: 25px;
+            border: 1px solid whitesmoke;
+            box-shadow: 3px 3px 15px lightblue, -3px -3px 15px lightblue;
+            border-radius: 3px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        input::placeholder {
+            color: purple;
+        }
+
+        input:focus {
+            outline: none;
+        }
+
+        #answer {
+            color: rgba(46, 46, 172, 0.9);
+        }
+
+        button {
+            width: min(60%, 220px);
+            height: 50px;
+            border: none;
+            border-radius: 3px;
+            background-color: blue;
+            font-size: 22px;
+            color: ghostwhite;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+
+        p {
+            font-size: 22px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <h1 class="intro">NUMBER GUESSING GAME</h1>
+        <h1 class="head">GUESS NUMBER BETWEEN 1-15!</h1>
+
+        <form id="guessForm">
+            <input type="text" id="guess" inputmode="numeric" placeholder="guess the number..... ">
+            <button type="submit">GUESS</button>
+        </form>
+
+        <p id="comment"></p>
+        <p id="attempt"></p>
+        <p id="answer"></p>
+    </div>
+
+    <script>
+        let guessInput = document.getElementById("guess");
+        let answer = document.getElementById("answer");
+        let atm = document.getElementById("attempt");
+        let cmt = document.getElementById("comment");
+        let form = document.getElementById("guessForm");
+
+        let min = 1;
+        let max = 15;
+        let target = Math.floor(Math.random() * (max - min + 1) + min);
+        let attempt = 0;
+
+        form.addEventListener("submit", (e) => {
+            e.preventDefault();
+            guessing();
+        });
+
+        function guessing() {
+            let guess = Number(guessInput.value);
+
+          
+            if (!Number.isInteger(guess) || guess < min || guess > max) {
+                answer.textContent = "⚠ Please enter valid number between " + min + " and " + max;
+                guessInput.value = "";
+                guessInput.focus();
+                return;
+            }
+
+            attempt++;
+
+            if (guess < target) {
+                cmt.textContent = "YOUR GUESSED NUMBER IS: " + guess;
+                answer.textContent = "⚠ Too low!!! ";
+                atm.textContent = "ATTEMPTS: " + attempt;
+            }
+            else if (guess > target) {
+                cmt.textContent = "YOUR GUESSED NUMBER IS: " + guess;
+                answer.textContent = "⚠ Too high!!! ";
+                atm.textContent = "ATTEMPTS: " + attempt;
+            }
+            else {
+               
+                cmt.textContent = "YOUR GUESSED NUMBER IS: " + guess;
+                answer.textContent = "🥇 Correct!!!!, you guessed right in " + attempt + " attempts.";
+                atm.textContent = "ATTEMPTS: " + attempt;
+
+             
+                attempt = 0;
+                target = Math.floor(Math.random() * (max - min + 1) + min);
+                cmt.textContent = "🎯 I picked a new number between " + min + " and " + max + ". Try again!";
+            }
+
+            guessInput.value = "";
+            guessInput.focus();
+        }
+    </script>
+</body>
+
+</html>

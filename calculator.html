@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator</title>
+
+   
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@13.2.0/lib/browser/math.js"></script>
+
+    <style>
+        body {
+            background-color: gray;
+            background-image: linear-gradient(135deg, #6b6b6b, #2b2b2b);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 10px;
+            box-sizing: border-box;
+            font-family: sans-serif;
+        }
+
+        .cal {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 25px;
+            background-color: rgba(0, 0, 0, 0.55);
+            padding: 12px;
+            box-sizing: border-box;
+        }
+
+        .input input {
+            width: 100%;
+            height: 90px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+            background-color: rgba(155, 155, 155, 0.3);
+            color: ghostwhite;
+            font-size: 1.5rem;
+            border: none;
+            border-radius: 15px;
+            padding: 0 15px;
+            text-align: right;
+        }
+
+        .output {
+            display: grid;
+            width: 100%;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        button {
+            width: 100%;
+            height: 65px;
+            font-size: 1.8rem;
+            background-color: darkgray;
+            color: ghostwhite;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .operator {
+            background-color: orange;
+            color: #111;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            background-color: lightgreen;
+            color: wheat;
+        }
+
+        .res {
+            background-color: #c62828;
+            color: white;
+            grid-column: span 2;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="cal">
+        <div class="input">
+            <input type="text" id="inp" readonly>
+        </div>
+        <div class="output">
+            <button class="operator btn" onclick="func('+')">+</button>
+            <button class="btn" onclick="func('7')">7</button>
+            <button class="btn" onclick="func('8')">8</button>
+            <button class="btn" onclick="func('9')">9</button>
+
+            <button class="operator btn" onclick="func('-')">-</button>
+            <button class="btn" onclick="func('4')">4</button>
+            <button class="btn" onclick="func('5')">5</button>
+            <button class="btn" onclick="func('6')">6</button>
+
+            <button class="operator btn" onclick="func('*')">*</button>
+            <button class="btn" onclick="func('1')">1</button>
+            <button class="btn" onclick="func('2')">2</button>
+            <button class="btn" onclick="func('3')">3</button>
+
+            <button class="operator btn" onclick="func('/')">/</button>
+            <button class="btn" onclick="func('0')">0</button>
+            <button class="btn" onclick="func('.')">.</button>
+            <button class="btn" onclick="func('00')">00</button>
+
+            <button class="operator btn" onclick="clr()">C</button>
+            <button class="operator btn" onclick="del()">DEL</button>
+            <button class="res btn" onclick="calc()">=</button>
+        </div>
+    </div>
+
+    <script>
+       let inp = document.getElementById("inp");
+
+    function func(input) {
+        inp.value += input;
+    }
+
+    function clr() { 
+        inp.value = ""; 
+    }
+
+    
+    function calc() {
+        try {
+            if (inp.value.trim() === "") return;
+            
+            
+            inp.value = math.evaluate(inp.value);
+        }
+        catch (error) {
+            inp.value = "ERROR!";
+            setTimeout(clr, 1500);
+        }
+    }
+
+    function del() {
+        inp.value = inp.value.slice(0, -1);
+    }
+    </script>
+</body>
+
+</html>

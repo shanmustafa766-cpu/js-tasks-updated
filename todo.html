@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do App</title>
+    <style>
+        h1 { color: blue; text-align: center; }
+        input { display: block; margin: auto; border: none; border-bottom: 1px solid grey; width: 25%; height: 50px; font-size: 30px; color: rgb(10, 81, 211); }
+        input::placeholder { color: rgb(10, 81, 211); text-align: center; }
+        input:focus { outline: none; }
+        .btn { display: block; border-radius: 15px; margin: auto; border: none; width: 130px; height: 45px; margin-top: 10px; font-size: 20px; background-color: blue; color: white; cursor: pointer; }
+        table { width: 65%; margin: auto; text-align: center; border-collapse: collapse; color: rgb(10, 81, 211); margin-top: 10px; font-size: 25px; border: 1px solid lightblue; }
+        thead { color: blue; }
+        thead, tr { height: 50px; }
+        table button { margin: auto; display: block; width: 70px; height: 40px; font-size: 25px; color: white; background-color: red; border: none; border-radius: 5px; cursor: pointer; }
+        input[type="checkbox"] { width: 20px; height: 20px; cursor: pointer; }
+        
+     
+        .completed {
+            text-decoration: line-through;
+            color: grey;
+        }
+    </style>
+</head>
+<body>
+    <h1>TO-DO APP</h1>
+    <input type="text" id="inp" placeholder="enter your todo.....">
+    <button onclick="save()" class="btn">Add Task</button>
+    <table>
+        <thead>
+            <tr>
+                <th>STATUS</th>
+                <th>DESCRIPTION</th>
+                <th>DELETE</th>
+            </tr>
+        </thead>
+        <tbody id="result"></tbody>
+    </table>
+
+    <script>
+        let task = JSON.parse(localStorage.getItem("myTodos")) || [];
+        res();
+
+       
+         function save() {
+    let inp = document.getElementById("inp");
+    let sinp = inp.value.trim();
+
+    if (sinp === "") {
+        alert("enter task.....");
+        return;
+    }
+
+    inp.value = "";                      
+
+    const tasks = { content: sinp, completed: false };   
+    task.push(tasks);
+    updateLocalStorage();
+    res();
+}
+        
+
+       function res() {
+    const tbody = document.getElementById("result");
+    tbody.replaceChildren();
+
+    for (let i = 0; i < task.length; i++) {
+        const t = task[i];
+        const tr = document.createElement("tr");
+
+        
+        const tdCheck = document.createElement("td");
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = t.completed;
+        cb.addEventListener("change", () => toggleStatus(i));
+        tdCheck.appendChild(cb);
+
+        
+        const tdText = document.createElement("td");
+        tdText.textContent = t.content;
+        if (t.completed) tdText.classList.add("completed");
+
+        
+        const tdDel = document.createElement("td");
+        const delBtn = document.createElement("button");
+        delBtn.textContent = "X";
+        delBtn.addEventListener("click", () => erase(i));
+        tdDel.appendChild(delBtn);
+
+        tr.append(tdCheck, tdText, tdDel);
+        tbody.appendChild(tr);
+    }
+}
+
+        function toggleStatus(index) {
+            task[index].completed = !task[index].completed;
+            updateLocalStorage();
+            res();
+        }
+
+        function erase(index) {
+            task.splice(index, 1);
+            updateLocalStorage();
+            res();
+        }
+
+        function updateLocalStorage() {
+            localStorage.setItem("myTodos", JSON.stringify(task));
+        }
+    </script>
+</body>
+</html>
+
