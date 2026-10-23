@@ -132,17 +132,9 @@
 
         function guessing() {
             const raw = guessInput.value.trim();
-
-            if (!/^\d+$/.test(raw)) {
-                answer.textContent = "⚠ Please enter valid number between " + min + " and " + max;
-                guessInput.value = "";
-                guessInput.focus();
-                return;
-            }
-
             const guess = Number(raw);
 
-            if (guess < min || guess > max) {
+            if (!/^\d+$/.test(raw) || guess < min || guess > max) {
                 answer.textContent = "⚠ Please enter valid number between " + min + " and " + max;
                 guessInput.value = "";
                 guessInput.focus();
