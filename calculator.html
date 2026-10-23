@@ -128,6 +128,8 @@
             else if (action === "clear") clearDisplay();
             else if (action === "delete") deleteLast();
             else if (action === "calc") calculate();
+
+            btn.blur();
         });
 
         function clearError() {
@@ -202,12 +204,14 @@
             const isEnter = e.key === "Enter" || e.key === "=";
             const isBackspace = e.key === "Backspace";
             const isEscape = e.key === "Escape";
+            const isSpace = e.key === " " || e.code === "Space";
 
-            if (!isDigit && !isOperator && !isEnter && !isBackspace && !isEscape) return;
+            if (!isDigit && !isOperator && !isEnter && !isBackspace && !isEscape && !isSpace) return;
 
 
             e.preventDefault();
 
+            if (isSpace) return;
             if (isDigit) appendToDisplay(e.key);
             else if (isOperator) appendToDisplay(e.key);
             else if (isEnter) calculate();
