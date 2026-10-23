@@ -6,12 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculator</title>
 
-   
     <script src="https://cdn.jsdelivr.net/npm/mathjs@13.2.0/lib/browser/math.js"></script>
 
     <style>
         body {
-            background-color: gray;
             background-image: linear-gradient(135deg, #6b6b6b, #2b2b2b);
             display: flex;
             justify-content: center;
@@ -57,22 +55,20 @@
             width: 100%;
             height: 65px;
             font-size: 1.8rem;
-            background-color: darkgray;
+            background-color: #555;
             color: ghostwhite;
             border: none;
             border-radius: 20px;
             cursor: pointer;
         }
 
+        button:hover {
+            filter: brightness(1.15);
+        }
+
         .operator {
             background-color: orange;
             color: #111;
-        }
-
-        .btn:hover {
-            transform: scale(1.05);
-            background-color: lightgreen;
-            color: wheat;
         }
 
         .res {
@@ -86,63 +82,138 @@
 <body>
     <div class="cal">
         <div class="input">
-            <input type="text" id="inp" readonly>
+            <label for="inp" style="position:absolute;left:-9999px;">Calculator display</label>
+            <input type="text" id="inp" readonly aria-label="Calculator display">
         </div>
         <div class="output">
-            <button class="operator btn" onclick="func('+')">+</button>
-            <button class="btn" onclick="func('7')">7</button>
-            <button class="btn" onclick="func('8')">8</button>
-            <button class="btn" onclick="func('9')">9</button>
+            <button class="operator btn" data-key="+" aria-label="Plus">+</button>
+            <button class="btn" data-key="7">7</button>
+            <button class="btn" data-key="8">8</button>
+            <button class="btn" data-key="9">9</button>
 
-            <button class="operator btn" onclick="func('-')">-</button>
-            <button class="btn" onclick="func('4')">4</button>
-            <button class="btn" onclick="func('5')">5</button>
-            <button class="btn" onclick="func('6')">6</button>
+            <button class="operator btn" data-key="-" aria-label="Minus">-</button>
+            <button class="btn" data-key="4">4</button>
+            <button class="btn" data-key="5">5</button>
+            <button class="btn" data-key="6">6</button>
 
-            <button class="operator btn" onclick="func('*')">*</button>
-            <button class="btn" onclick="func('1')">1</button>
-            <button class="btn" onclick="func('2')">2</button>
-            <button class="btn" onclick="func('3')">3</button>
+            <button class="operator btn" data-key="*" aria-label="Multiply">*</button>
+            <button class="btn" data-key="1">1</button>
+            <button class="btn" data-key="2">2</button>
+            <button class="btn" data-key="3">3</button>
 
-            <button class="operator btn" onclick="func('/')">/</button>
-            <button class="btn" onclick="func('0')">0</button>
-            <button class="btn" onclick="func('.')">.</button>
-            <button class="btn" onclick="func('00')">00</button>
+            <button class="operator btn" data-key="/" aria-label="Divide">/</button>
+            <button class="btn" data-key="0">0</button>
+            <button class="btn" data-key=".">.</button>
+            <button class="btn" data-key="00">00</button>
 
-            <button class="operator btn" onclick="clr()">C</button>
-            <button class="operator btn" onclick="del()">DEL</button>
-            <button class="res btn" onclick="calc()">=</button>
+            <button class="operator btn" data-action="clear" aria-label="Clear">C</button>
+            <button class="operator btn" data-action="delete" aria-label="Delete last">DEL</button>
+            <button class="res btn" data-action="calc" aria-label="Equals">=</button>
         </div>
     </div>
 
     <script>
-       let inp = document.getElementById("inp");
+        const inp = document.getElementById("inp");
+        let justEvaluated = false;
+        let errorTimer = null;
 
-    function func(input) {
-        inp.value += input;
-    }
+        document.querySelector(".output").addEventListener("click", (e) => {
+            const btn = e.target.closest("button");
+            if (!btn) return;
 
-    function clr() { 
-        inp.value = ""; 
-    }
+            const key = btn.dataset.key;
+            const action = btn.dataset.action;
 
-    
-    function calc() {
-        try {
-            if (inp.value.trim() === "") return;
-            
-            
-            inp.value = math.evaluate(inp.value);
+            if (key) appendToDisplay(key);
+            else if (action === "clear") clearDisplay();
+            else if (action === "delete") deleteLast();
+            else if (action === "calc") calculate();
+        });
+
+        function clearError() {
+            if (errorTimer) {
+                clearTimeout(errorTimer);
+                errorTimer = null;
+                inp.value = "";
+            }
         }
-        catch (error) {
-            inp.value = "ERROR!";
-            setTimeout(clr, 1500);
-        }
-    }
 
-    function del() {
-        inp.value = inp.value.slice(0, -1);
-    }
+        function appendToDisplay(ch) {
+            clearError();
+
+            if (justEvaluated) {
+                if (/[0-9.]/.test(ch)) inp.value = "";
+                justEvaluated = false;
+            }
+            inp.value += ch;
+        }
+
+        function clearDisplay() {
+            clearError();
+            inp.value = "";
+            justEvaluated = false;
+        }
+
+        function deleteLast() {
+            clearError();
+            inp.value = inp.value.slice(0, -1);
+            justEvaluated = false;
+        }
+
+        function showError(msg) {
+            inp.value = msg;
+            justEvaluated = false;
+            clearTimeout(errorTimer);
+            errorTimer = setTimeout(() => {
+                inp.value = "";
+                errorTimer = null;
+            }, 2000);
+        }
+
+        function calculate() {
+
+            if (typeof math === "undefined") {
+                showError("Internet needed");
+                return;
+            }
+
+            try {
+                if (inp.value.trim() === "") return;
+
+                const result = math.evaluate(inp.value);
+
+                if (!Number.isFinite(result)) {
+                    showError("Cannot divide by 0");
+                    return;
+                }
+
+                inp.value = math.format(result, {precision: 12, lowerExp: -12, upperExp: 15});
+                justEvaluated = true;
+            } catch (error) {
+                showError("ERROR!");
+            }
+        }
+
+
+        window.addEventListener("keydown", (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            const isDigit = /^[0-9.]$/.test(e.key);
+            const isOperator = "+-*/".includes(e.key);
+            const isEnter = e.key === "Enter" || e.key === "=";
+            const isBackspace = e.key === "Backspace";
+            const isEscape = e.key === "Escape";
+
+            if (!isDigit && !isOperator && !isEnter && !isBackspace && !isEscape) return;
+
+
+            e.preventDefault();
+
+            if (isDigit) appendToDisplay(e.key);
+            else if (isOperator) appendToDisplay(e.key);
+            else if (isEnter) calculate();
+            else if (isBackspace) deleteLast();
+            else if (isEscape) clearDisplay();
+        });
     </script>
 </body>
 
