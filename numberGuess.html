@@ -30,7 +30,14 @@
             color: rgba(46, 46, 172, 0.9);
         }
 
-        input {
+        label {
+            display: block;
+            color: rgb(10, 81, 211);
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        #guess {
             display: block;
             margin: auto;
             height: 45px;
@@ -44,12 +51,18 @@
             text-align: center;
         }
 
-        input::placeholder {
+        #guess::placeholder {
             color: purple;
         }
 
-        input:focus {
-            outline: none;
+        #guess:focus-visible {
+            outline: 2px solid blue;
+            outline-offset: 2px;
+        }
+
+        button:focus-visible {
+            outline: 2px solid orange;
+            outline-offset: 2px;
         }
 
         #answer {
@@ -68,6 +81,10 @@
             cursor: pointer;
         }
 
+        button:hover {
+            filter: brightness(1.15);
+        }
+
         p {
             font-size: 22px;
         }
@@ -77,68 +94,91 @@
 <body>
     <div class="app">
         <h1 class="intro">NUMBER GUESSING GAME</h1>
-        <h1 class="head">GUESS NUMBER BETWEEN 1-15!</h1>
+        <h2 class="head">GUESS NUMBER BETWEEN 1-15!</h2>
 
         <form id="guessForm">
-            <input type="text" id="guess" inputmode="numeric" placeholder="guess the number..... ">
+            <label for="guess">Your guess</label>
+            <input type="text" id="guess" inputmode="numeric" maxlength="2" autocomplete="off"
+                placeholder="guess the number..... ">
             <button type="submit">GUESS</button>
         </form>
 
-        <p id="comment"></p>
-        <p id="attempt"></p>
-        <p id="answer"></p>
+        <p id="comment" aria-live="polite"></p>
+        <p id="attempt" aria-live="polite"></p>
+        <p id="answer" aria-live="polite"></p>
     </div>
 
     <script>
-        let guessInput = document.getElementById("guess");
-        let answer = document.getElementById("answer");
-        let atm = document.getElementById("attempt");
-        let cmt = document.getElementById("comment");
-        let form = document.getElementById("guessForm");
+        const guessInput = document.getElementById("guess");
+        const answer = document.getElementById("answer");
+        const atm = document.getElementById("attempt");
+        const cmt = document.getElementById("comment");
+        const form = document.getElementById("guessForm");
 
-        let min = 1;
-        let max = 15;
+        const min = 1;
+        const max = 15;
         let target = Math.floor(Math.random() * (max - min + 1) + min);
         let attempt = 0;
+        const guessed = new Set();
 
         form.addEventListener("submit", (e) => {
             e.preventDefault();
             guessing();
         });
 
-        function guessing() {
-            let guess = Number(guessInput.value);
+        function attemptLabel(n) {
+            return n === 1 ? "ATTEMPT: 1" : "ATTEMPTS: " + n;
+        }
 
-          
-            if (!Number.isInteger(guess) || guess < min || guess > max) {
+        function guessing() {
+            const raw = guessInput.value.trim();
+
+            if (!/^\d+$/.test(raw)) {
                 answer.textContent = "⚠ Please enter valid number between " + min + " and " + max;
                 guessInput.value = "";
                 guessInput.focus();
                 return;
             }
 
+            const guess = Number(raw);
+
+            if (guess < min || guess > max) {
+                answer.textContent = "⚠ Please enter valid number between " + min + " and " + max;
+                guessInput.value = "";
+                guessInput.focus();
+                return;
+            }
+
+            if (guessed.has(guess)) {
+                answer.textContent = "⚠ You already tried " + guess + "!";
+                guessInput.value = "";
+                guessInput.focus();
+                return;
+            }
+
+            guessed.add(guess);
             attempt++;
 
             if (guess < target) {
                 cmt.textContent = "YOUR GUESSED NUMBER IS: " + guess;
                 answer.textContent = "⚠ Too low!!! ";
-                atm.textContent = "ATTEMPTS: " + attempt;
+                atm.textContent = attemptLabel(attempt);
             }
             else if (guess > target) {
                 cmt.textContent = "YOUR GUESSED NUMBER IS: " + guess;
                 answer.textContent = "⚠ Too high!!! ";
-                atm.textContent = "ATTEMPTS: " + attempt;
+                atm.textContent = attemptLabel(attempt);
             }
             else {
-               
-                cmt.textContent = "YOUR GUESSED NUMBER IS: " + guess;
-                answer.textContent = "🥇 Correct!!!!, you guessed right in " + attempt + " attempts.";
-                atm.textContent = "ATTEMPTS: " + attempt;
-
-             
-                attempt = 0;
-                target = Math.floor(Math.random() * (max - min + 1) + min);
+                const attemptsWord = attempt === 1 ? "attempt" : "attempts";
+                answer.textContent = "🥇 Correct! " + guess + " was right! You got it in " +
+                    attempt + " " + attemptsWord + ".";
+                atm.textContent = attemptLabel(attempt);
                 cmt.textContent = "🎯 I picked a new number between " + min + " and " + max + ". Try again!";
+
+                attempt = 0;
+                guessed.clear();
+                target = Math.floor(Math.random() * (max - min + 1) + min);
             }
 
             guessInput.value = "";
@@ -146,5 +186,7 @@
         }
     </script>
 </body>
+
+</html>
 
 </html>
