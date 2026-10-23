@@ -184,7 +184,11 @@
                 const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
                 if (!Array.isArray(stored)) return [];
                 return stored
-                    .filter((t) => t && typeof t.content === "string")
+                    .filter((t) => {
+                        if (t && typeof t.content === "string") return true;
+                        console.warn("Skipping invalid todo item:", t);
+                        return false;
+                    })
                     .map((t) => ({ content: t.content, completed: t.completed === true }));
             } catch {
                 return [];
@@ -297,8 +301,12 @@
             if (next === null) return;
 
             const text = next.trim().slice(0, 200);
-            if (text === "") return;
+            if (text === "") {
+                msg.textContent = "Task can't be empty";
+                return;
+            }
 
+            msg.textContent = "";
             tasks[index].content = text;
             saveToStorage();
             renderTasks();
