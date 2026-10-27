@@ -161,9 +161,9 @@
             atm.textContent = attemptLabel(attempt);
 
             if (guess < target) {
-                answer.textContent = "⚠ Too low!";
+                answer.textContent = " Too low!";
             } else if (guess > target) {
-                answer.textContent = "⚠ Too high!";
+                answer.textContent = " Too high!";
             } else {
                 finishRound(guess);
                 return;
