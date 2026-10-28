@@ -101,8 +101,6 @@
         const filterBtns = document.querySelectorAll(".filters [data-filter]");
         const clearCompletedBtn = document.getElementById("clearCompleted");
 
-        // Probe localStorage once. A failing setItem is the only signal
-        // that storage is unavailable (private mode, quota, blocked).
         let storageOk = (() => {
             try {
                 const test = "__probe__" + Date.now();
@@ -121,8 +119,10 @@
             return "id-" + Date.now() + "-" + Math.random().toString(36).slice(2);
         }
 
-        // Read the task list from storage. Always returns an array.
-        // Corrupt JSON or an invalid shape yields [], without flipping storageOk.
+        // Set when loadTasks gives an ID to a task that had none.
+        // The caller saves immediately so the new IDs stick.
+        let addedIds = false;
+
         function loadTasks() {
             if (!storageOk) return [];
             try {
@@ -133,8 +133,10 @@
                 const cleaned = [];
                 for (const t of parsed) {
                     if (!t || typeof t.content !== "string") continue;
+                    const hasId = typeof t.id === "string" && t.id;
+                    if (!hasId) addedIds = true;
                     cleaned.push({
-                        id: (typeof t.id === "string" && t.id) ? t.id : newId(),
+                        id: hasId ? t.id : newId(),
                         content: t.content,
                         completed: t.completed === true
                     });
@@ -152,6 +154,7 @@
             }
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+                addedIds = false;
                 msg.textContent = "";
             } catch {
                 storageOk = false;
@@ -160,6 +163,8 @@
         }
 
         let tasks = loadTasks();
+        if (addedIds) saveToStorage();
+
         let editingId = null;
         let editDraft = null;
         let pendingDeleteId = null;
@@ -167,18 +172,20 @@
         let focusRequest = null;
         let currentFilter = "all";
 
+        let pendingClear = false;
+        let clearTimer = null;
+
         renderTasks();
 
-        // Reload from storage, then look up by id. Avoids acting on a stale index.
         function getTaskById(id) {
             if (storageOk) tasks = loadTasks();
             return tasks.find((t) => t.id === id);
         }
 
-        // Keep two open tabs in sync.
         window.addEventListener("storage", (e) => {
             if (e.key !== STORAGE_KEY) return;
             tasks = loadTasks();
+            if (addedIds) saveToStorage();
             if (editingId && !tasks.some((t) => t.id === editingId)) editingId = null;
             if (pendingDeleteId && !tasks.some((t) => t.id === pendingDeleteId)) pendingDeleteId = null;
             renderTasks();
@@ -187,7 +194,6 @@
         filterBtns.forEach((btn) => {
             btn.addEventListener("click", () => {
                 currentFilter = btn.dataset.filter;
-                // Changing the filter can hide the row being edited.
                 editingId = null;
                 editDraft = null;
                 filterBtns.forEach((b) => {
@@ -203,8 +209,21 @@
             if (storageOk) tasks = loadTasks();
             const doneCount = tasks.filter((t) => t.completed).length;
             if (doneCount === 0) return;
-            const word = doneCount === 1 ? "task" : "tasks";
-            if (!confirm("Delete " + doneCount + " completed " + word + "?")) return;
+
+            if (!pendingClear) {
+                pendingClear = true;
+                clearCompletedBtn.textContent = "Sure? (" + doneCount + ")";
+                clearTimeout(clearTimer);
+                clearTimer = setTimeout(() => {
+                    pendingClear = false;
+                    clearCompletedBtn.textContent = "Clear completed";
+                }, 3000);
+                return;
+            }
+
+            clearTimeout(clearTimer);
+            pendingClear = false;
+            clearCompletedBtn.textContent = "Clear completed";
             tasks = tasks.filter((t) => !t.completed);
             saveToStorage();
             renderTasks();
@@ -236,8 +255,6 @@
                 task.completed = !task.completed;
                 saveToStorage();
             }
-            // Under the "Active" filter, a completed task disappears from view.
-            // Send focus to the input instead of losing it to the page body.
             if (currentFilter === "active") {
                 focusRequest = { id: null, selector: null, fallback: "inp" };
             } else {
@@ -286,7 +303,6 @@
             renderTasks();
         }
 
-        // A single click marks the row "Sure?"; a second click within 3s deletes it.
         function requestDelete(id) {
             if (pendingDeleteId !== id) {
                 pendingDeleteId = id;
@@ -309,7 +325,6 @@
         }
 
         function renderTasks() {
-            // Preserve the text typed into an open edit box across re-renders.
             if (editingId) {
                 const openInput = tbody.querySelector(".edit-input");
                 if (openInput) {
@@ -339,7 +354,6 @@
                 tr.appendChild(td);
                 tbody.appendChild(tr);
 
-                // Empty list: restore focus (usually to the input) and clear the request.
                 if (focusRequest && focusRequest.fallback) {
                     document.getElementById(focusRequest.fallback).focus();
                 }
@@ -429,7 +443,6 @@
                 tbody.appendChild(tr);
             }
 
-            // Restore focus after the table is rebuilt.
             if (focusRequest) {
                 const row = focusRequest.id
                     ? [...tbody.children].find((r) => r.dataset.id === focusRequest.id)
