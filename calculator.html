@@ -98,7 +98,7 @@
     <div class="cal">
         <div class="input">
             <label for="inp" class="visually-hidden">Calculator display</label>
-            <input type="text" id="inp" readonly aria-live="polite">
+            <input type="text" id="inp" readonly aria-label="Calculator display">
         </div>
         <div class="output">
             <button type="button" class="operator btn" data-key="+" aria-label="Plus">+</button>
@@ -128,40 +128,48 @@
     </div>
 
     <script>
+        "use strict";
+
         const OPERATORS = "+-*/";
         const MAX_RESULT = 1e15;
+        const MAX_INPUT_LENGTH = 40;
 
         const inp = document.getElementById("inp");
         let justEvaluated = false;
         let errorTimer = null;
 
         // ── Evaluator ──
-        // BODMAS: * and / before + and -. Signs in front of numbers handled.
-        // Throws "bad" for a malformed expression, "div0" for x/0, "nan0" for 0/0.
+        // Grammar:
+        //   expression := term (("+" | "-") term)*
+        //   term       := factor (("*" | "/") factor)*
+        //   factor     := ("+" | "-")* number
+        // Throws: "bad" (malformed), "div0" (x/0), "nan0" (0/0)
         function evaluate(text) {
             const expr = text.replace(/\s+/g, "");
-            const tokens = expr.match(/\d+\.?\d*|\.\d+|[+\-*/]/g) || [];
+            if (expr === "") throw new Error("bad");
 
-            if (tokens.join("") !== expr) throw new Error("bad");
+            const tokens = expr.match(/\d+\.?\d*|\.\d+|[+\-*/]/g);
+            if (!tokens || tokens.join("") !== expr) throw new Error("bad");
 
             let pos = 0;
+            const peek = () => tokens[pos];
+            const next = () => tokens[pos++];
 
-            function number() {
+            function factor() {
                 let sign = 1;
-                while (tokens[pos] === "+" || tokens[pos] === "-") {
-                    if (tokens[pos] === "-") sign = -sign;
-                    pos++;
+                while (peek() === "+" || peek() === "-") {
+                    if (next() === "-") sign = -sign;
                 }
-                const t = tokens[pos++];
+                const t = next();
                 if (t === undefined || /^[+\-*/]$/.test(t)) throw new Error("bad");
                 return sign * Number(t);
             }
 
             function term() {
-                let value = number();
-                while (tokens[pos] === "*" || tokens[pos] === "/") {
-                    const op = tokens[pos++];
-                    const right = number();
+                let value = factor();
+                while (peek() === "*" || peek() === "/") {
+                    const op = next();
+                    const right = factor();
                     if (op === "/" && right === 0) {
                         if (value === 0) throw new Error("nan0");
                         throw new Error("div0");
@@ -173,8 +181,8 @@
 
             function expression() {
                 let value = term();
-                while (tokens[pos] === "+" || tokens[pos] === "-") {
-                    const op = tokens[pos++];
+                while (peek() === "+" || peek() === "-") {
+                    const op = next();
                     const right = term();
                     value = op === "+" ? value + right : value - right;
                 }
@@ -210,8 +218,6 @@
             else if (action === "delete") deleteLast();
             else if (action === "calc") calculate();
 
-            // Mouse clicks drop focus so Space/Enter don't re-press.
-            // Keyboard activation (detail === 0) keeps focus.
             if (e.detail > 0) btn.blur();
         });
 
@@ -231,20 +237,31 @@
                 justEvaluated = false;
             }
 
+            if (inp.value.length >= MAX_INPUT_LENGTH) return;
+
             const value = inp.value;
             const last = value.slice(-1);
+            const beforeLast = value.slice(-2, -1);
 
             if (OPERATORS.includes(ch)) {
+                // Nothing yet: only "-" is allowed as a leading sign
                 if (value === "") {
-                    if (ch !== "-") return;
-                } else if (OPERATORS.includes(last)) {
-                    // "-" after "*" or "/" starts a negative number: keep both
+                    if (ch === "-") inp.value = "-";
+                    return;
+                }
+                // If the last char is an operator…
+                if (OPERATORS.includes(last)) {
+                    // "-" after "*" or "/" starts a negative number (5*-3)
                     if (ch === "-" && (last === "*" || last === "/")) {
                         inp.value += ch;
                         return;
                     }
-                    if (value.length === 1) return;
-                    // Otherwise, replace the previous operator
+                    // If the last two chars are operators (5/-*), replace both
+                    if (OPERATORS.includes(beforeLast) && last === "-") {
+                        inp.value = value.slice(0, -2) + ch;
+                        return;
+                    }
+                    // Otherwise replace just the last operator
                     inp.value = value.slice(0, -1) + ch;
                     return;
                 }
@@ -252,6 +269,7 @@
                 return;
             }
 
+            // Digits and decimal point
             const current = value.split(/[+\-*/]/).pop();
 
             if (ch === ".") {
@@ -260,12 +278,20 @@
                     inp.value += "0.";
                     return;
                 }
-            } else if (current === "0" || (current === "" && ch === "00")) {
-                if (ch === "00" || ch === "0") {
-                    if (current === "") inp.value += "0";
-                    return;
-                }
-                inp.value = value.slice(0, value.length - current.length) + ch;
+                inp.value += ".";
+                return;
+            }
+
+            // ch is a digit or "00"
+            if (current === "0") {
+                // Don't allow 01, 00, 000
+                if (ch === "0" || ch === "00") return;
+                inp.value = value.slice(0, -1) + ch;
+                return;
+            }
+
+            if (current === "" && ch === "00") {
+                inp.value += "0";
                 return;
             }
 
