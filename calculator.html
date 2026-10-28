@@ -194,8 +194,11 @@
             return result;
         }
 
+        // Integers below 1e15 are exact in JavaScript, so print them directly.
+        // Non-integers get 12 significant digits to hide float noise (0.1+0.2).
         function formatResult(n) {
             if (n === 0) return "0";
+            if (Number.isInteger(n)) return String(n);
             if (Math.abs(n) < 1e-12) return "0";
             let s = String(Number(n.toPrecision(12)));
             if (s.includes("e")) {
@@ -244,24 +247,19 @@
             const beforeLast = value.slice(-2, -1);
 
             if (OPERATORS.includes(ch)) {
-                // Nothing yet: only "-" is allowed as a leading sign
                 if (value === "") {
                     if (ch === "-") inp.value = "-";
                     return;
                 }
-                // If the last char is an operator…
                 if (OPERATORS.includes(last)) {
-                    // "-" after "*" or "/" starts a negative number (5*-3)
                     if (ch === "-" && (last === "*" || last === "/")) {
                         inp.value += ch;
                         return;
                     }
-                    // If the last two chars are operators (5/-*), replace both
                     if (OPERATORS.includes(beforeLast) && last === "-") {
                         inp.value = value.slice(0, -2) + ch;
                         return;
                     }
-                    // Otherwise replace just the last operator
                     inp.value = value.slice(0, -1) + ch;
                     return;
                 }
@@ -269,7 +267,6 @@
                 return;
             }
 
-            // Digits and decimal point
             const current = value.split(/[+\-*/]/).pop();
 
             if (ch === ".") {
@@ -282,9 +279,7 @@
                 return;
             }
 
-            // ch is a digit or "00"
             if (current === "0") {
-                // Don't allow 01, 00, 000
                 if (ch === "0" || ch === "00") return;
                 inp.value = value.slice(0, -1) + ch;
                 return;
