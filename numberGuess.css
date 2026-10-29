@@ -1,0 +1,92 @@
+.app {
+    margin: auto;
+    text-align: center;
+    padding: 10px;
+}
+
+.intro {
+    background-color: blue;
+    color: aliceblue;
+    min-height: 70px;
+    padding: 12px 10px;
+    width: min(90%, 700px);
+    margin: auto;
+    line-height: 1.3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.head {
+    color: rgba(46, 46, 172, 0.9);
+}
+
+label {
+    display: block;
+    color: rgb(10, 81, 211);
+    font-size: 16px;
+    margin-top: 10px;
+}
+
+#guess {
+    display: block;
+    margin: auto;
+    height: 45px;
+    width: min(80%, 320px);
+    color: blueviolet;
+    font-size: 25px;
+    border: 1px solid whitesmoke;
+    box-shadow: 3px 3px 15px lightblue, -3px -3px 15px lightblue;
+    border-radius: 3px;
+    box-sizing: border-box;
+    text-align: center;
+}
+
+#guess::placeholder {
+    color: purple;
+}
+
+#guess:focus-visible {
+    outline: 2px solid blue;
+    outline-offset: 2px;
+}
+
+button:focus-visible {
+    outline: 2px solid orange;
+    outline-offset: 2px;
+}
+
+#answer {
+    color: rgba(46, 46, 172, 0.9);
+    font-weight: bold;
+}
+
+button {
+    width: min(60%, 220px);
+    height: 50px;
+    border: none;
+    border-radius: 3px;
+    background-color: blue;
+    font-size: 22px;
+    color: ghostwhite;
+    margin-top: 20px;
+    cursor: pointer;
+}
+
+button:disabled {
+    background-color: #6b6b6b;
+    cursor: not-allowed;
+}
+
+button:hover:not(:disabled) {
+    filter: brightness(1.15);
+}
+
+[hidden] {
+    display: none !important;
+}
+
+p {
+    font-size: 22px;
+}
